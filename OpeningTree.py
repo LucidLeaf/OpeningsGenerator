@@ -1,6 +1,5 @@
-from typing import List, Any
+from pprint import pprint
 
-import RequestHandler
 from RequestHandler import *
 
 
@@ -18,7 +17,7 @@ def recursive_tree_search(number_of_lines: int, recursion_depth: int, list_of_pl
         return list_of_played_moves
 
     # request next batch of most common moves
-    json = make_request(fen=initial_game_fen, played=list_of_played_moves, number_of_lines=number_of_lines)
+    json = make_request(number_of_lines=number_of_lines, played=list_of_played_moves)
     most_common_moves = get_most_common_moves(json)
 
     # recursively repeat the process for each of the next best moves
@@ -32,4 +31,5 @@ def recursive_tree_search(number_of_lines: int, recursion_depth: int, list_of_pl
 
 
 if __name__ == "__main__":
-    pprint(recursive_tree_search(2, 2))
+    lines = recursive_tree_search(1, 3)
+    pprint(lines)
