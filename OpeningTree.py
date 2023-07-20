@@ -4,10 +4,12 @@ from RequestHandler import *
 class OpeningTree:
     start_name = "Start"
     move: str
+    name: str
     children: list
 
-    def __init__(self, move=start_name):
+    def __init__(self, move=start_name, name=""):
         self.move = move
+        self.name = name
         self.children = []
 
     def add_node(self, new_node):
@@ -18,7 +20,7 @@ class OpeningTree:
         if level == 0:
             ret = self.start_name + "\n"
         else:
-            ret = "|   " * (level - 1) + "|-- " + repr(self.move) + "\n"
+            ret = "|   " * (level - 1) + "|-- " + self.move + ": " + self.name + "\n"
         for child in self.children:
             ret += child.__str__(level + 1)
         return ret
@@ -34,19 +36,21 @@ def recursive_tree_search(number_of_lines: int, recursion_depth: int,
     :return: Matrix of most common moves per line
     """
     if list_of_played_moves is None:
-        # first level of recursion, initialize move list and tree data structure
         list_of_played_moves = []
+
+    # request information about position
+    json = make_request(number_of_lines=number_of_lines, played=list_of_played_moves)
+    most_common_moves = get_most_common_moves(json)
+
+    if not list_of_played_moves:
         tree = OpeningTree()
     else:
+        name = get_opening_name(json)
         last_move = list_of_played_moves[len(list_of_played_moves) - 1]
-        tree = OpeningTree(last_move)
+        tree = OpeningTree(last_move, name)
 
     if recursion_depth <= 0:
         return tree
-
-    # request next batch of most common moves
-    json = make_request(number_of_lines=number_of_lines, played=list_of_played_moves)
-    most_common_moves = get_most_common_moves(json)
 
     # recursively repeat the process for each of the next best moves
     for move in most_common_moves:
