@@ -7,7 +7,7 @@ url_lichess_database = "https://explorer.lichess.ovh/lichess"
 initial_game_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 
-def make_request(fen: str, played: str, number_of_lines: int, masters=True) -> dict:
+def make_request(fen: str, played: list[str], number_of_lines: int, masters=True) -> dict:
     """
 
     :param fen: FEN string of the position
@@ -17,7 +17,7 @@ def make_request(fen: str, played: str, number_of_lines: int, masters=True) -> d
     :return: dictionary containing json response
     """
 
-    def create_query_url(base_url: str, queries: [str]):
+    def create_query_url(base_url: str, queries: list[str]) -> str:
         if len(queries) == 0:
             return base_url
         query_url = base_url + "?"
@@ -30,38 +30,43 @@ def make_request(fen: str, played: str, number_of_lines: int, masters=True) -> d
     url = url_masters_database if masters else url_lichess_database
     fen = "fen=" + fen
     moves = "moves=" + str(number_of_lines)
-    played = "" if played == "" else "play=" + played
+    played = played_string_from_list_of_moves(played)
     url = create_query_url(url, [fen, moves, played])
-    data = None
+    json = None
     try:
         response = requests.get(url)
         response.raise_for_status()  # Raises an error for failed responses (4xx, 5xx status codes)
-        data = response.json()
+        json = response.json()
         # Process the 'data' dictionary as needed
     except requests.exceptions.RequestException as e:
         print("Request failed:", e)
     except ValueError as e:
         print("Error parsing JSON response:", e)
-    return data
+    return json
 
 
-def get_most_common_moves(data: dict):
+def get_most_common_moves(json: dict) -> list[str]:
     moves = []
-    for move in data['moves']:
-        moves.append(move['uci'])
+    if json is not None and json['moves'] is not None:
+        for move in json['moves']:
+            moves.append(move['uci'])
     return moves
 
 
-def get_opening_name(data: dict):
-    if data['opening'] != None and data['opening']['name'] != None:
-        return data['opening']['name']
+def get_opening_name(json: dict) -> str:
+    if json['opening'] is not None and json['opening']['name'] is not None:
+        return json['opening']['name']
     return ""
 
 
-if __name__ == "__main__":
-    data = make_request(fen=initial_game_fen, played="", number_of_lines=4,
-                        masters=True)
-    pprint(data)
-    print(get_opening_name(data))
-    print("Most common responses:")
-    pprint(get_most_common_moves(data))
+def played_string_from_list_of_moves(played: list[str]) -> str:
+    """
+
+    :param played: List of moves in UCI format
+    :return: comma seperated list of moves
+    """
+    play = ''
+    for move in played:
+        play = play + move + ","
+    play = play.removesuffix(",")
+    return play
