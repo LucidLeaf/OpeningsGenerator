@@ -1,5 +1,3 @@
-from pprint import pprint
-
 import requests
 
 url_masters_database = "https://explorer.lichess.ovh/masters"
@@ -7,7 +5,7 @@ url_lichess_database = "https://explorer.lichess.ovh/lichess"
 initial_game_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 
-def make_request(fen: str, played: list[str], number_of_lines: int, masters=True) -> dict:
+def make_request(number_of_lines: int, fen: str = initial_game_fen, played: list[str] = None, masters=True) -> dict:
     """
 
     :param fen: FEN string of the position
@@ -27,10 +25,13 @@ def make_request(fen: str, played: list[str], number_of_lines: int, masters=True
         query_url.removesuffix("&")
         return query_url
 
+    if played is None:
+        played = []
+
     url = url_masters_database if masters else url_lichess_database
     fen = "fen=" + fen
     moves = "moves=" + str(number_of_lines)
-    played = played_string_from_list_of_moves(played)
+    played = "play=" + played_string_from_list_of_moves(played)
     url = create_query_url(url, [fen, moves, played])
     json = None
     try:
