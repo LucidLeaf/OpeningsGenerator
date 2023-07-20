@@ -15,6 +15,21 @@ class OpeningTree:
     def add_node(self, new_node):
         self.children.append(new_node)
 
+    def find_path_to_move(self, target_move, current_path=[]):
+        """Find the path to the target move in the tree."""
+        if self.move != self.start_name:
+            current_path = current_path + [self.move]
+
+        if self.move == target_move:
+            return current_path
+
+        for child in self.children:
+            found_path = child.find_path_to_move(target_move, current_path)
+            if found_path:
+                return found_path
+
+        return None
+
     def __str__(self, level=0):
         """String representation of the tree."""
         if level == 0:
@@ -63,4 +78,7 @@ def recursive_tree_search(number_of_lines: int, recursion_depth: int,
 
 if __name__ == "__main__":
     lines = recursive_tree_search(2, 3)
+    queens_pawn = lines.find_path_to_move("d2d4")
+
+    lines = recursive_tree_search(1, 3, list_of_played_moves=queens_pawn)
     print(str(lines))
