@@ -71,9 +71,3 @@ def recursive_tree_search(number_of_lines: int, recursion_depth: int,
         resulting_move_tree = recursive_tree_search(number_of_lines, recursion_depth - 1, new_line)
         tree.add_node(resulting_move_tree)
     return tree
-
-
-if __name__ == "__main__":
-    lines = recursive_tree_search(2, 3)
-    lines = lines.children[0]
-    print(str(lines))
