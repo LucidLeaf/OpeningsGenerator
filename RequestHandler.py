@@ -1,8 +1,8 @@
+import chess
 import requests
 
 url_masters_database = "https://explorer.lichess.ovh/masters"
 url_lichess_database = "https://explorer.lichess.ovh/lichess"
-initial_game_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 
 def make_request(number_of_lines: int, fen: str, played: str, masters) -> dict:
@@ -61,11 +61,17 @@ def played_string_from_list_of_moves(played: list[str]) -> str:
     return play
 
 
-def retrieve_position_information(number_of_lines: int, fen: str = initial_game_fen, played: list[str] = None,
+def get_fen_from_moves(moves: list[str]) -> str:
+    board = chess.Board()
+    for move in moves:
+        board.push_uci(move)
+    return board.fen()
+
+
+def retrieve_position_information(number_of_lines: int, played: list[str] = None,
                                   masters=True):
     """
 
-    :param fen: FEN string of the position
     :param played: Comma seperated moves played so far in UCI notation
     :param number_of_lines: number of top lines played to be returned
     :param masters: Whether to query the masters database or all games
@@ -85,9 +91,9 @@ def retrieve_position_information(number_of_lines: int, fen: str = initial_game_
     if played is None:
         played = []
 
-    played = played_string_from_list_of_moves(played)
-    json = make_request(number_of_lines=number_of_lines, fen=fen, played=played, masters=masters)
-
+    played_string = played_string_from_list_of_moves(played)
+    json = make_request(number_of_lines=number_of_lines, fen=chess.STARTING_FEN, played=played_string, masters=masters)
+    fen = get_fen_from_moves(played)
     moves = get_most_common_moves(json)
     name = get_opening_name(json)
     info = PositionInformation(fen, moves, name)
