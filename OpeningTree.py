@@ -5,11 +5,13 @@ class OpeningTree:
     start_name = "Start"
     move: str
     name: str
+    fen: str
     children: list
 
-    def __init__(self, move=start_name, name=""):
+    def __init__(self, fen, move=start_name, name=""):
         self.move = move
         self.name = name
+        self.fen = fen
         self.children = []
 
     def add_node(self, new_node):
@@ -40,13 +42,13 @@ class OpeningTree:
         return ret
 
 
-def recursive_tree_search(number_of_lines: int, recursion_depth: int,
+def generate_opening_tree(number_of_lines: int, recursion_depth: int,
                           list_of_played_moves: list[str] = None) -> OpeningTree:
     """
 
     :param number_of_lines: The number of most common move options to be considered
     :param recursion_depth: The length of each sequence
-    :param list_of_played_moves: List of moves played in UCI format in order
+    :param list_of_played_moves: List of moves played in UCI format
     :return: Matrix of most common moves per line
     """
     if list_of_played_moves is None:
@@ -56,10 +58,10 @@ def recursive_tree_search(number_of_lines: int, recursion_depth: int,
     position_information = retrieve_position_information(number_of_lines=number_of_lines, played=list_of_played_moves)
 
     if not list_of_played_moves:
-        tree = OpeningTree()
+        tree = OpeningTree(position_information.fen)
     else:
         last_move = list_of_played_moves[len(list_of_played_moves) - 1]
-        tree = OpeningTree(last_move, position_information.name)
+        tree = OpeningTree(move=last_move, fen=position_information.fen, name=position_information.name)
 
     if recursion_depth <= 0:
         return tree
@@ -68,6 +70,6 @@ def recursive_tree_search(number_of_lines: int, recursion_depth: int,
     for move in position_information.common_moves:
         new_line = list_of_played_moves.copy()
         new_line.append(move)
-        resulting_move_tree = recursive_tree_search(number_of_lines, recursion_depth - 1, new_line)
+        resulting_move_tree = generate_opening_tree(number_of_lines, recursion_depth - 1, new_line)
         tree.add_node(resulting_move_tree)
     return tree
