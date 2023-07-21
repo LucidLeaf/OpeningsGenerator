@@ -5,16 +5,7 @@ url_lichess_database = "https://explorer.lichess.ovh/lichess"
 initial_game_fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
 
-def make_request(number_of_lines: int, fen: str = initial_game_fen, played: list[str] = None, masters=True) -> dict:
-    """
-
-    :param fen: FEN string of the position
-    :param played: Comma seperated moves played so far in UCI notation
-    :param number_of_lines: number of top lines played to be returned
-    :param masters: Whether to query the masters database or all games
-    :return: dictionary containing json response
-    """
-
+def make_request(number_of_lines: int, fen: str, played: str, masters) -> dict:
     def create_query_url(base_url: str, queries: list[str]) -> str:
         if len(queries) == 0:
             return base_url
@@ -25,13 +16,10 @@ def make_request(number_of_lines: int, fen: str = initial_game_fen, played: list
         query_url.removesuffix("&")
         return query_url
 
-    if played is None:
-        played = []
-
     url = url_masters_database if masters else url_lichess_database
     fen = "fen=" + fen
     moves = "moves=" + str(number_of_lines)
-    played = "play=" + played_string_from_list_of_moves(played)
+    played = "play=" + played
     url = create_query_url(url, [fen, moves, played])
     json = None
     try:
@@ -71,3 +59,36 @@ def played_string_from_list_of_moves(played: list[str]) -> str:
         play = play + move + ","
     play = play.removesuffix(",")
     return play
+
+
+def retrieve_position_information(number_of_lines: int, fen: str = initial_game_fen, played: list[str] = None,
+                                  masters=True):
+    """
+
+    :param fen: FEN string of the position
+    :param played: Comma seperated moves played so far in UCI notation
+    :param number_of_lines: number of top lines played to be returned
+    :param masters: Whether to query the masters database or all games
+    :return: PositionInformation object containing necessary information from database
+    """
+
+    class PositionInformation:
+        fen: str
+        common_moves: list[str]
+        name: str
+
+        def __init__(self, position_fen, position_common_moves, name):
+            self.fen = position_fen
+            self.common_moves = position_common_moves
+            self.name = name
+
+    if played is None:
+        played = []
+
+    played = played_string_from_list_of_moves(played)
+    json = make_request(number_of_lines=number_of_lines, fen=fen, played=played, masters=masters)
+
+    moves = get_most_common_moves(json)
+    name = get_opening_name(json)
+    info = PositionInformation(fen, moves, name)
+    return info

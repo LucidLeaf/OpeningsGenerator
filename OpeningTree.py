@@ -15,8 +15,10 @@ class OpeningTree:
     def add_node(self, new_node):
         self.children.append(new_node)
 
-    def find_path_to_move(self, target_move, current_path=[]):
+    def find_path_to_move(self, target_move, current_path=None):
         """Find the path to the target move in the tree."""
+        if current_path is None:
+            current_path = []
         if self.move != self.start_name:
             current_path = current_path + [self.move]
 
@@ -32,10 +34,7 @@ class OpeningTree:
 
     def __str__(self, level=0):
         """String representation of the tree."""
-        if level == 0:
-            ret = self.start_name + "\n"
-        else:
-            ret = "|   " * (level - 1) + "|-- " + self.move + ": " + self.name + "\n"
+        ret = "|   " * level + "|-- " + self.move + ": " + self.name + "\n"
         for child in self.children:
             ret += child.__str__(level + 1)
         return ret
@@ -54,21 +53,19 @@ def recursive_tree_search(number_of_lines: int, recursion_depth: int,
         list_of_played_moves = []
 
     # request information about position
-    json = make_request(number_of_lines=number_of_lines, played=list_of_played_moves)
-    most_common_moves = get_most_common_moves(json)
+    position_information = retrieve_position_information(number_of_lines=number_of_lines, played=list_of_played_moves)
 
     if not list_of_played_moves:
         tree = OpeningTree()
     else:
-        name = get_opening_name(json)
         last_move = list_of_played_moves[len(list_of_played_moves) - 1]
-        tree = OpeningTree(last_move, name)
+        tree = OpeningTree(last_move, position_information.name)
 
     if recursion_depth <= 0:
         return tree
 
     # recursively repeat the process for each of the next best moves
-    for move in most_common_moves:
+    for move in position_information.common_moves:
         new_line = list_of_played_moves.copy()
         new_line.append(move)
         resulting_move_tree = recursive_tree_search(number_of_lines, recursion_depth - 1, new_line)
@@ -78,7 +75,5 @@ def recursive_tree_search(number_of_lines: int, recursion_depth: int,
 
 if __name__ == "__main__":
     lines = recursive_tree_search(2, 3)
-    queens_pawn = lines.find_path_to_move("d2d4")
-
-    lines = recursive_tree_search(1, 3, list_of_played_moves=queens_pawn)
+    lines = lines.children[0]
     print(str(lines))
