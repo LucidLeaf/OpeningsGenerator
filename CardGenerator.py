@@ -1,10 +1,8 @@
-import base64
-from io import BytesIO
-
-import cairosvg
 import chess
 import chess.svg
 import genanki
+
+import OpeningTree
 
 DECK_NAME = "Generated Chess Openings"
 DECK_ID = 2059416610
@@ -46,18 +44,16 @@ class OpeningNote(genanki.Note):
         return genanki.guid_for(self.fields[0])
 
 
-def fen_to_anki_png(fen: str) -> str:
-    def generate_svg_from_fen(fen):
-        board = chess.Board(fen)
-        svg_board = chess.svg.board(board=board)
-        return svg_board
+def write_fen_to_svg_file(fen: str) -> str:
+    # convert fen to svg
+    board = chess.Board(fen)
+    svg_board = chess.svg.board(board=board)
+    # write svg to file
+    filename = fen.split(" ")[0].replace("/", "") + ".svg"
+    with open(filename, "w") as file:
+        file.write(svg_board)
+    return filename
 
-    def png_from_svg(svg):
-        png_output = BytesIO()
-        cairosvg.svg2png(bytestring=svg, write_to=png_output)
-        return png_output.getvalue()
 
-    board_svg = generate_svg_from_fen(fen)
-    board_png = png_from_svg(board_svg)
-    return base64.b64encode(board_png).decode("utf-8")
-
+if __name__ == "__main__":
+    fen = OpeningTree.generate_opening_tree(1, 3).children[0].children[0].children[0].fen
